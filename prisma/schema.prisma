@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["darwin", "linux-musl"]
+}
+
+model Program {
+  id          String      @id @default(cuid())
+  name        String      @db.VarChar(255)
+  customers   Customer[]
+  created_at  DateTime    @db.Timestamptz @default(now())
+  created_by  String      @db.VarChar(255)
+  updated_at  DateTime?   @db.Timestamptz
+  updated_by  String?     @db.VarChar(255)
+}
+
+model Customer {
+  id                    String    @id @default(cuid())
+  processor_customer_id String    @db.VarChar(255)
+  Program               Program?  @relation(fields: [program_id], references: [id])
+  program_id            String
+  payments              Payment[]
+  cards                 Card[]
+  created_at            DateTime  @db.Timestamptz @default(now())
+  created_by            String    @db.VarChar(255)
+  updated_at            DateTime? @db.Timestamptz
+  updated_by            String?   @db.VarChar(255)
+
+  @@index([program_id])
+}
+
+model Card {
+  id            String      @id @default(cuid())
+  Customer      Customer?   @relation(fields: [customer_id], references: [id])
+  customer_id   String
+  default_card  Boolean     @default(false)
+  payments      Payment[]
+  created_at    DateTime    @db.Timestamptz @default(now())
+  created_by    String      @db.VarChar(255)
+  updated_at    DateTime?   @db.Timestamptz
+  updated_by    String?     @db.VarChar(255)
+
+  @@index([customer_id])
+  @@index([id, customer_id])
+}
+
+model Payment {
+  id                    String      @id @default(cuid())
+  processor_payment_id  String      @db.VarChar(255)
+  Customer              Customer?   @relation(fields: [customer_id], references: [id])
+  customer_id           String
+  Card                  Card?       @relation(fields: [card_id], references: [id])
+  card_id               String?
+  created_at            DateTime    @db.Timestamptz @default(now())
+  created_by            String      @db.VarChar(255)
+  updated_at            DateTime?   @db.Timestamptz
+  updated_by            String?     @db.VarChar(255)
+
+  @@index([customer_id])
+  @@index([id, customer_id])
+}
